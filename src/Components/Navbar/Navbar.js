@@ -29,11 +29,20 @@ const Navbar = (props) => {
       <div className="collapse navbar-collapse" id="navbarNavDropdown">
         <ul className="navbar-nav ml-auto mr-5 pr-3 text-center">
           <li className="nav-item">
+            <Link className="nav-link" to={`/watermarks`}>
+              WaterMarks
+            </Link>
+          </li>{" "}
+          <li className="nav-item">
+            <Link className="nav-link" to={`/profile`}>
+              Profile
+            </Link>
+          </li>
+          <li className="nav-item">
             <Link className="nav-link" to={`/mindset`}>
               MindSet
             </Link>
           </li>
-
           <li className="nav-item dropdown pl-2">
             <a
               className="nav-link dropdown-toggle"
@@ -75,14 +84,14 @@ const Navbar = (props) => {
               className="dropdown-menu"
               aria-labelledby="navbarDropdownMenuLink1"
             >
-               <Link className="dropdown-item" to={`/videos/${breath_work}`}>
+              <Link className="dropdown-item" to={`/videos/${breath_work}`}>
                 Breath Work
               </Link>
               <Link className="dropdown-item" to={`/videos/${challenges}`}>
                 Challenges
               </Link>
               <Link className="dropdown-item" to={`/videos/${exercise}`}>
-                 Exercise
+                Exercise
               </Link>
               <Link className="dropdown-item" to={`/videos/${mobility}`}>
                 Mobility

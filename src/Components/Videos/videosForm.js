@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import firebaseDb from "../FirebaseConfig/firebaseConfig";
+import PointForm from './PointForm'
 
 const VideosForm = (props) => {
   const category = props.match.params.category;
@@ -47,7 +48,9 @@ const VideosForm = (props) => {
       uploadTask.on(
         "state_changed",
         (snapshot) => {
-          const prog = Math.round((snapshot.bytesTransferred/snapshot.totalBytes)*100);
+          const prog = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
           setProgress(prog);
         },
         (err) => {
@@ -65,14 +68,15 @@ const VideosForm = (props) => {
               .collection("videos")
               .doc(category);
             documentRef.set(data).then((res) => {
-
               for (let i = 0; i < points.length; i++) {
-                documentRef.collection("points_data").doc(i+"").set(points[i]).then(result => {
-                
-                })
+                documentRef
+                  .collection("points_data")
+                  .doc(i + "")
+                  .set(points[i])
+                  .then((result) => {});
               }
 
-              alert("Data is Uploaded Succesfully")
+              alert("Data is Uploaded Succesfully");
               setTitle("");
               setVideoSrc(null);
               setVideoUrl(null);
@@ -87,7 +91,10 @@ const VideosForm = (props) => {
 
   return (
     <div className="mx-auto mt-2 control-width">
-      <progress value={progress} max="100" style={{width: "100%"}}/>
+      <div className="text-center">
+        <h1>{category}</h1>
+        <progress value={progress} max="100" style={{ width: "100%" }} />
+      </div>
       <video width="100%" height="80%" autoPlay controls>
         {videoSrc && <source src={videoSrc} type="video/mp4" />}
         Your browser does not support the video tag.
@@ -104,7 +111,7 @@ const VideosForm = (props) => {
             className="form-control"
             id="selectvideo"
             onChange={(e) => fileHandler(e)}
-            placeholder="Select  Video"
+            placeholder="Select Video"
             accept="video/*"
             required
           />
@@ -181,6 +188,10 @@ const VideosForm = (props) => {
           </div>
         </div>
       </div>
+      <h2 className="text-center my-3">Points</h2>
+     
+      <PointForm  category={category}/>
+
     </div>
   );
 };

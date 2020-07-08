@@ -7,23 +7,15 @@ import {
   extractImageFileExtensionFromBase64,
 } from "../../Utils/utility";
 
-const MindSetForm = (props) => {
+const Watermark = (props) => {
   const [progress, setProgress] = useState(0);
-  const [mindsetForm, setMindsetForm] = useState({
-    title: "",
-    description: "",
-  });
+  const [title, setTitle] = useState("");
   const [imgSrc, setImgSrc] = useState(null);
-  const [uploaded, setUploaded] = useState(false);
-  const [point, setPoint] = useState({
-    title: "",
-    sub_title: "",
-  });
-  const [points, setPoints] = useState([]);
   const [file, setFile] = useState(null);
   const [image, setImage] = useState(null);
+  const [uploaded, setUploaded] = useState(false);
   const [crop, setCrop] = useState({
-    aspect: 1 / 2,
+    aspect: 1 / 1,
     unit: "%",
     width: 25,
     height: 50,
@@ -32,11 +24,12 @@ const MindSetForm = (props) => {
   useEffect(() => {
     const documentRef = firebaseDb
       .firestore()
-      .collection("mindset")
-      .doc("mindset");
-    documentRef.get().then((snapshopt) => {
-      if (snapshopt.data()) {
-        setImgSrc(snapshopt.data().image_url);
+      .collection("Watermarks")
+      .doc("1");
+    documentRef.get().then((snapshot) => {
+      if (snapshot.data()) {
+        setTitle(snapshot.data().textwatermark);
+        setImgSrc(snapshot.data().image_url);
         setUploaded(true);
       }
     });
@@ -47,31 +40,13 @@ const MindSetForm = (props) => {
     setUploaded(false);
   };
 
-  const onPointChange = (e) => {
-    setPoint({ ...point, [e.target.name]: e.target.value });
-  };
-
-  const onPointSubmit = (e) => {
-    e.preventDefault();
-
-    points.push(point);
-    alert("Succesfully Added");
-
-    setPoint({
-      title: "",
-      sub_title: "",
-    });
-  };
-
   const onchange = (e) => {
-    setMindsetForm({
-      ...mindsetForm,
-      [e.target.name]: e.target.value,
-    });
+    setTitle(e.target.value);
   };
 
   function getCroppedImg() {
     const canvas = document.createElement("canvas");
+    canvas.setAttribute("crossorigin", "anonymous");
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
     canvas.width = crop.width;
@@ -100,9 +75,8 @@ const MindSetForm = (props) => {
 
   const onsubmit = (e) => {
     e.preventDefault();
-
     if (file) {
-      const storageRef = firebaseDb.storage().ref().child(`Images/mindset`);
+      const storageRef = firebaseDb.storage().ref().child(`Images/watermarks`);
       const uploadTask = storageRef.put(file);
       uploadTask.on(
         "state_changed",
@@ -118,53 +92,47 @@ const MindSetForm = (props) => {
         () => {
           storageRef.getDownloadURL().then((url) => {
             const data = {
-              title: mindsetForm.title,
-              description: mindsetForm.description,
+              textwatermark: title,
               image_url: url,
             };
 
             const documentRef = firebaseDb
               .firestore()
-              .collection("mindset")
-              .doc("mindset");
+              .collection("Watermarks")
+              .doc("1");
             documentRef.set(data).then((res) => {
               alert("Data is Uploaded Succesfully");
-              setMindsetForm({
-                title: "",
-                description: "",
-              });
-
               setImgSrc(url);
+              setUploaded(true);
             });
           });
         }
       );
     } else {
+      if (imgSrc !== null && uploaded) {
         const data = {
-          title: mindsetForm.title,
-          description: mindsetForm.description,
+          textwatermark: title,
           image_url: imgSrc,
         };
 
         const documentRef = firebaseDb
           .firestore()
-          .collection("mindset")
-          .doc("mindset");
+          .collection("Watermarks")
+          .doc("1");
         documentRef.set(data).then((res) => {
           alert("Data is Uploaded Succesfully");
-          setMindsetForm({
-            title: "",
-            description: "",
-          });
           setImgSrc(imgSrc);
+          setUploaded(true);
         });
+      } else {
+        alert("Please Crop Image");
+      }
     }
   };
-
   return (
     <div className="mx-auto mt-2 control-width">
       <div className="text-center">
-        <h1>MindSet</h1>
+        <h1>Watermark</h1>
         <progress value={progress} max="100" style={{ width: "100%" }} />
         {imgSrc && (
           <div>
@@ -203,7 +171,7 @@ const MindSetForm = (props) => {
             className="form-control"
             id="selectvideo"
             onChange={(e) => fileHandler(e)}
-            placeholder="Select  Video"
+            placeholder="Select  Image"
             accept="image/*"
           />
         </div>
@@ -216,89 +184,18 @@ const MindSetForm = (props) => {
             className="form-control"
             id="title"
             name="title"
-            value={mindsetForm.title || ""}
+            value={title || ""}
             onChange={(e) => onchange(e)}
             placeholder="Select Title"
+            required
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="title" className="h6">
-            Description
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="title"
-            name="description"
-            value={mindsetForm.description || ""}
-            onChange={(e) => onchange(e)}
-            placeholder="Description"
-          />
-        </div>
-        <button
-          type="button"
-          className="btn btn-secondary btn-block"
-          data-toggle="modal"
-          data-target="#myModal"
-        >
-          Add Point
-        </button>
+
         <button type="submit" className="btn btn-secondary btn-block">
           Submit
         </button>
       </form>
-
-      <div className="modal" id="myModal">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h4 className="modal-title">Add Point</h4>
-              <button type="button" className="close" data-dismiss="modal">
-                &times;
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <form onSubmit={(e) => onPointSubmit(e)}>
-                <div className="form-group">
-                  <label htmlFor="title">Title</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="title"
-                    name="title"
-                    value={point.title || ""}
-                    onChange={(e) => onPointChange(e)}
-                    placeholder="Select Title"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="description">Description</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="description"
-                    name="sub_title"
-                    value={point.sub_title || ""}
-                    onChange={(e) => onPointChange(e)}
-                    placeholder="Description"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="btn btn-secondary btn-block my-3"
-                >
-                  Save Point
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
-
-export default MindSetForm;
+export default Watermark;

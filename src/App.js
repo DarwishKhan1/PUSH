@@ -6,6 +6,8 @@ import HomeComponent from './Components/Home/Home'
 import MeditationForm from './Components/Meditation/MeditationForm'
 import videosForm from './Components/Videos/videosForm'
 import MindSetForm from './Components/Mindset/MindSetForm'
+import WaterMark from './Components/WaterMark/watermark'
+import Profile from './Components/Profile/profile'
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
       <Route exact path="/meditation/:category" component={MeditationForm} />
       <Route exact path="/videos/:category" component={videosForm} />
       <Route exact path="/mindset" component={MindSetForm} />
+      <Route exact path="/watermarks" component={WaterMark} />
+      <Route exact path="/profile" component={Profile} />
     </div>
    </Router>
   );
