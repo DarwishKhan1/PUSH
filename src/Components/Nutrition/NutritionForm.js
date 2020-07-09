@@ -8,9 +8,9 @@ import {
 } from "../../Utils/utility";
 import PointForm from "./PointForm";
 
-const MindSetForm = (props) => {
+const NutritionForm = (props) => {
   const [progress, setProgress] = useState(0);
-  const [mindsetForm, setMindsetForm] = useState({
+  const [nutritionForm, setNutritionForm] = useState({
     title: "",
     description: "",
   });
@@ -34,12 +34,12 @@ const MindSetForm = (props) => {
   useEffect(() => {
     const documentRef = firebaseDb
       .firestore()
-      .collection("mindset")
-      .doc("mindset");
+      .collection("nutrition")
+      .doc("nutrition");
     documentRef.get().then((snapshopt) => {
       if (snapshopt.data()) {
         setImgSrc(snapshopt.data().image_url);
-        setMindsetForm({
+        setNutritionForm({
           title: snapshopt.data().title,
           description: snapshopt.data().description,
         });
@@ -65,8 +65,8 @@ const MindSetForm = (props) => {
 
     const documentRef = firebaseDb
       .firestore()
-      .collection("mindset")
-      .doc("mindset")
+      .collection("nutrition")
+      .doc("nutrition")
       .collection("points_data");
 
     documentRef
@@ -78,8 +78,8 @@ const MindSetForm = (props) => {
   };
 
   const onchange = (e) => {
-    setMindsetForm({
-      ...mindsetForm,
+    setNutritionForm({
+      ...nutritionForm,
       [e.target.name]: e.target.value,
     });
   };
@@ -117,7 +117,7 @@ const MindSetForm = (props) => {
 
     if (isFileSelected) {
       if (file) {
-        const storageRef = firebaseDb.storage().ref().child(`Images/mindset`);
+        const storageRef = firebaseDb.storage().ref().child(`Images/nutrition`);
         const uploadTask = storageRef.put(file);
         uploadTask.on(
           "state_changed",
@@ -133,15 +133,15 @@ const MindSetForm = (props) => {
           () => {
             storageRef.getDownloadURL().then((url) => {
               const data = {
-                title: mindsetForm.title,
-                description: mindsetForm.description,
+                title: nutritionForm.title,
+                description: nutritionForm.description,
                 image_url: url,
               };
 
               const documentRef = firebaseDb
                 .firestore()
-                .collection("mindset")
-                .doc("mindset");
+                .collection("nutrition")
+                .doc("nutrition");
               documentRef.set(data).then((res) => {
                 alert("Data is Uploaded Succesfully");
                 setIsFileSelected(false);
@@ -155,15 +155,15 @@ const MindSetForm = (props) => {
       }
     } else {
       const data = {
-        title: mindsetForm.title,
-        description: mindsetForm.description,
+        title: nutritionForm.title,
+        description: nutritionForm.description,
         image_url: imgSrc,
       };
 
       const documentRef = firebaseDb
         .firestore()
-        .collection("mindset")
-        .doc("mindset");
+        .collection("nutrition")
+        .doc("nutrition");
       documentRef.set(data).then((res) => {
         alert("Data is Uploaded Succesfully");
         setImgSrc(imgSrc);
@@ -174,12 +174,12 @@ const MindSetForm = (props) => {
   return (
     <div className="mx-auto mt-2 control-width">
       <div className="text-center">
-        <h1>Mindset</h1>
+        <h1>Nutrition</h1>
         <progress value={progress} max="100" style={{ width: "100%" }} />
         {imgSrc && (
           <div>
             {uploaded ? (
-              <img src={imgSrc} />
+              <img src={imgSrc}  height="400px"/>
             ) : (
               <div>
                 <ReactCrop
@@ -226,7 +226,7 @@ const MindSetForm = (props) => {
             className="form-control"
             id="title"
             name="title"
-            value={mindsetForm.title || ""}
+            value={nutritionForm.title || ""}
             onChange={(e) => onchange(e)}
             placeholder="Select Title"
           />
@@ -240,7 +240,7 @@ const MindSetForm = (props) => {
             className="form-control"
             id="title"
             name="description"
-            value={mindsetForm.description || ""}
+            value={nutritionForm.description || ""}
             onChange={(e) => onchange(e)}
             placeholder="Description"
           />
@@ -314,4 +314,4 @@ const MindSetForm = (props) => {
   );
 };
 
-export default MindSetForm;
+export default NutritionForm;

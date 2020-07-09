@@ -32,7 +32,7 @@ const Navbar = (props) => {
             <Link className="nav-link" to={`/watermarks`}>
               WaterMarks
             </Link>
-          </li>{" "}
+          </li>
           <li className="nav-item">
             <Link className="nav-link" to={`/profile`}>
               Profile
@@ -41,6 +41,11 @@ const Navbar = (props) => {
           <li className="nav-item">
             <Link className="nav-link" to={`/mindset`}>
               MindSet
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link className="nav-link" to={`/nutrition`}>
+              Nutrition
             </Link>
           </li>
           <li className="nav-item dropdown pl-2">
