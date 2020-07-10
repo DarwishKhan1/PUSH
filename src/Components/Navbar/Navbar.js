@@ -12,7 +12,7 @@ const Navbar = (props) => {
   const motivation = "motivation";
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <Link className="navbar-brand ml-5 " to="/">
+      <Link className="navbar-brand ml-5 " to="/PUSH">
         PUSH
       </Link>
       <button

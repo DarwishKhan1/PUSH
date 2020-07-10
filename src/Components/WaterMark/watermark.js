@@ -137,7 +137,7 @@ const Watermark = (props) => {
         {imgSrc && (
           <div>
             {uploaded ? (
-              <img src={imgSrc} />
+              <img src={imgSrc} height="400px"/>
             ) : (
               <div>
                 <ReactCrop

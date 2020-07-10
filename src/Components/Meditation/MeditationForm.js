@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import firebaseDb from "../FirebaseConfig/firebaseConfig";
 import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -16,7 +16,8 @@ const MeditationForm = (props) => {
   });
   const [audioUrl, setAudioUrl] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
-
+  const [uploaded, setUploaded] = useState(false);
+  const [isImageSelected, setIsImageSelected] = useState(false);
   const [file, setFile] = useState(null);
   const [image, setImage] = useState(null);
   const [crop, setCrop] = useState({
@@ -26,12 +27,74 @@ const MeditationForm = (props) => {
     height: 50,
   });
 
+  useEffect(() => {
+    const documentRef = firebaseDb
+      .firestore()
+      .collection("meditation")
+      .doc(category);
+    documentRef.get().then((snapshopt) => {
+      if (snapshopt.data()) {
+        setAudioUrl(snapshopt.data().audio_url);
+        setImageUrl(snapshopt.data().image_url);
+        setMeditationForm({
+          title: snapshopt.data().title,
+          description: snapshopt.data().description,
+        });
+        setUploaded(true);
+      }
+    });
+  }, [category]);
+
   const AudioFileHandler = (e) => {
-    setAudioUrl(e.target.files[0]);
+    if (e.target.files[0]) {
+      setAudioUrl(e.target.files[0]);
+
+      const audioStorageRef = firebaseDb
+        .storage()
+        .ref()
+        .child(`audio/meditation_${category}`);
+      const uploadTask = audioStorageRef.put(e.target.files[0]);
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const prog = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          setProgress(prog);
+        },
+        (err) => {
+          console.log(err);
+        },
+        () => {
+          audioStorageRef.getDownloadURL().then((audUrl) => {
+            const data = {
+              title: meditationForm.title,
+              description: meditationForm.description,
+              audio_url: audUrl,
+              image_url: imageUrl,
+              category: category,
+            };
+
+            const documentRef = firebaseDb
+              .firestore()
+              .collection("meditation")
+              .doc(category);
+            documentRef.set(data).then((res) => {
+              setAudioUrl(audUrl);
+              alert("Audio is Uploaded Succesfully");
+            });
+          });
+        }
+      );
+    }
   };
 
   const imgFileHandler = (e) => {
-    setImageUrl(URL.createObjectURL(e.target.files[0]));
+    if (e.target.files[0]) {
+      setImageUrl(URL.createObjectURL(e.target.files[0]));
+      setUploaded(false);
+      setIsImageSelected(true);
+    }
   };
 
   const onchange = (e) => {
@@ -71,71 +134,65 @@ const MeditationForm = (props) => {
 
   const onsubmit = (e) => {
     e.preventDefault();
-
-    const audioStorageRef = firebaseDb
-      .storage()
-      .ref()
-      .child(`audio/meditation_${category}`);
     const imageStorageRef = firebaseDb
       .storage()
       .ref()
       .child(`images/meditation_${category}`);
-  
+
+    if (isImageSelected) {
       if (file) {
-        const uploadTask = audioStorageRef.put(audioUrl);
-        uploadTask.on(
+        const uploadTask1 = imageStorageRef.put(file);
+
+        uploadTask1.on(
           "state_changed",
-          (snapshot) => {
-            const prog = Math.round(
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            );
-            setProgress(prog);
-          },
+          (snapshot) => {},
           (err) => {
             console.log(err);
           },
           () => {
-            audioStorageRef.getDownloadURL().then((audioUrl) => {
-              const uploadTask1 = imageStorageRef.put(file);
-    
-              uploadTask1.on(
-                "state_changed",
-                (snapshot) => {},
-                (err) => {
-                  console.log(err);
-                },
-                () => {
-                  imageStorageRef.getDownloadURL().then((imgUrl) => {
-                    const data = {
-                      title: meditationForm.title,
-                      description: meditationForm.description,
-                      audio_url: audioUrl,
-                      image_url: imgUrl,
-                      category: category,
-                    };
-    
-                    const documentRef = firebaseDb
-                      .firestore()
-                      .collection("meditation")
-                      .doc(category);
-                    documentRef.set(data).then((res) => {
-                      alert("Data is Uploaded Succesfully");
-                      setMeditationForm({
-                        title: "",
-                        description: "",
-                      });
-                      setAudioUrl(null);
-                      setImageUrl(null);
-                    });
-                  });
-                }
-              );
+            imageStorageRef.getDownloadURL().then((imgUrl) => {
+              const data = {
+                title: meditationForm.title,
+                description: meditationForm.description,
+                audio_url: audioUrl,
+                image_url: imgUrl,
+                category: category,
+              };
+
+              const documentRef = firebaseDb
+                .firestore()
+                .collection("meditation")
+                .doc(category);
+              documentRef.set(data).then((res) => {
+                alert("Data is Uploaded Succesfully");
+                setAudioUrl(audioUrl);
+                setImageUrl(imageUrl);
+              });
             });
           }
         );
-      }else{
-        alert("Please Crop Image")
+      } else {
+        alert("Please Crop Image");
       }
+    } else {
+      const data = {
+        title: meditationForm.title,
+        description: meditationForm.description,
+        audio_url: audioUrl,
+        image_url: imageUrl,
+        category: category,
+      };
+
+      const documentRef = firebaseDb
+        .firestore()
+        .collection("meditation")
+        .doc(category);
+      documentRef.set(data).then((res) => {
+        alert("Data is Uploaded Succesfully");
+        setAudioUrl(audioUrl);
+        setImageUrl(imageUrl);
+      });
+    }
   };
 
   return (
@@ -143,22 +200,25 @@ const MeditationForm = (props) => {
       <div className="text-center">
         <h1>Meditation {category}</h1>
         <progress value={progress} max="100" style={{ width: "100%" }} />
-        {imageUrl && (
-          <div>
-            <ReactCrop
-              src={imageUrl}
-              onImageLoaded={setImage}
-              crop={crop}
-              onChange={setCrop}
-            />
-            <button
-              onClick={getCroppedImg}
-              className="btn btn-secondary btn-block my-2"
-            >
-              Crop Image{" "}
-            </button>
-          </div>
-        )}
+        {imageUrl &&
+          (uploaded ? (
+            <img src={imageUrl} height="400px" />
+          ) : (
+            <div>
+              <ReactCrop
+                src={imageUrl}
+                onImageLoaded={setImage}
+                crop={crop}
+                onChange={setCrop}
+              />
+              <button
+                onClick={getCroppedImg}
+                className="btn btn-secondary btn-block my-2"
+              >
+                Crop Image{" "}
+              </button>
+            </div>
+          ))}
       </div>
 
       <form
@@ -177,7 +237,6 @@ const MeditationForm = (props) => {
             onChange={(e) => AudioFileHandler(e)}
             placeholder="Select  Video"
             accept="audio/*"
-            required
           />
         </div>
         <div className="form-group">
@@ -192,7 +251,6 @@ const MeditationForm = (props) => {
             value={meditationForm.title || ""}
             onChange={(e) => onchange(e)}
             placeholder="Select Title"
-            required
           />
         </div>
         <div className="form-group">
@@ -207,7 +265,6 @@ const MeditationForm = (props) => {
             value={meditationForm.description || ""}
             onChange={(e) => onchange(e)}
             placeholder="Description"
-            required
           />
         </div>
         <div className="form-group">
@@ -221,7 +278,6 @@ const MeditationForm = (props) => {
             onChange={(e) => imgFileHandler(e)}
             placeholder="Select  Video"
             accept="image/*"
-            required
           />
         </div>
         <button type="submit" className="btn btn-secondary btn-block">

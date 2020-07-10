@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import firebaseDb from "../FirebaseConfig/firebaseConfig";
-import PointForm from './PointForm'
+import PointForm from "./PointForm";
 
-const VideosForm = (props) => {
-  const category = props.match.params.category;
+const Mobility = (props) => {
   const [progress, setProgress] = useState(0);
+  const [isFileSelected, setIsFileSelected] = useState(false);
   const [title, setTitle] = useState("");
   const [videoSrc, setVideoSrc] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
@@ -12,11 +12,26 @@ const VideosForm = (props) => {
     title: "",
     sub_title: "",
   });
-  const [points, setPoints] = useState([]);
+
+  useEffect(() => {
+    const documentRef = firebaseDb
+      .firestore()
+      .collection("videos")
+      .doc("mobility");
+    documentRef.get().then((snapshopt) => {
+      if (snapshopt.data()) {
+        setVideoSrc(snapshopt.data().video_url);
+        setTitle(snapshopt.data().title);
+      }
+    });
+  }, []);
 
   const fileHandler = (e) => {
-    setVideoSrc(URL.createObjectURL(e.target.files[0]));
-    setVideoUrl(e.target.files[0]);
+    if (e.target.files[0]) {
+      setVideoSrc(URL.createObjectURL(e.target.files[0]));
+      setVideoUrl(e.target.files[0]);
+      setIsFileSelected(true);
+    }
   };
 
   const onPointChange = (e) => {
@@ -26,13 +41,18 @@ const VideosForm = (props) => {
   const onPointSubmit = (e) => {
     e.preventDefault();
 
-    points.push(point);
-    alert("Succesfully Added");
+    const documentRef = firebaseDb
+      .firestore()
+      .collection("videos")
+      .doc("mobility")
+      .collection("points_data");
 
-    setPoint({
-      title: "",
-      sub_title: "",
-    });
+    documentRef
+      .doc()
+      .set(point)
+      .then((res) => {
+        alert("Point is Uploaded Succesfully");
+      });
   };
 
   const onchange = (e) => {
@@ -41,9 +61,8 @@ const VideosForm = (props) => {
 
   const onSubmitVideo = (e) => {
     e.preventDefault();
-
-    if (points.length > 0) {
-      const storageRef = firebaseDb.storage().ref().child(`videos/${category}`);
+    if (isFileSelected) {
+      const storageRef = firebaseDb.storage().ref().child(`videos/mobility`);
       const uploadTask = storageRef.put(videoUrl);
       uploadTask.on(
         "state_changed",
@@ -66,37 +85,39 @@ const VideosForm = (props) => {
             const documentRef = firebaseDb
               .firestore()
               .collection("videos")
-              .doc(category);
+              .doc("mobility");
             documentRef.set(data).then((res) => {
-              for (let i = 0; i < points.length; i++) {
-                documentRef
-                  .collection("points_data")
-                  .doc(i + "")
-                  .set(points[i])
-                  .then((result) => {});
-              }
-
               alert("Data is Uploaded Succesfully");
-              setTitle("");
-              setVideoSrc(null);
-              setVideoUrl(null);
             });
           });
         }
       );
     } else {
-      alert("Please Add some Points");
+      const data = {
+        title: title,
+        video_url: videoSrc,
+      };
+
+      const documentRef = firebaseDb
+        .firestore()
+        .collection("videos")
+        .doc("mobility");
+      documentRef.set(data).then((res) => {
+        alert("Data is Uploaded Succesfully");
+      });
     }
   };
 
   return (
     <div className="mx-auto mt-2 control-width">
       <div className="text-center">
-        <h1>{category}</h1>
+        <h1>Mobility</h1>
         <progress value={progress} max="100" style={{ width: "100%" }} />
       </div>
-      <video width="100%" height="80%" autoPlay controls>
-        {videoSrc && <source src={videoSrc} type="video/mp4" />}
+      <video width="100%" height="400px" autoPlay controls>
+        {videoSrc && (
+          <source src={videoSrc} type="video/mp4" />
+        )}
         Your browser does not support the video tag.
       </video>
       <form
@@ -113,7 +134,6 @@ const VideosForm = (props) => {
             onChange={(e) => fileHandler(e)}
             placeholder="Select Video"
             accept="video/*"
-            required
           />
         </div>
         <div className="form-group">
@@ -126,7 +146,6 @@ const VideosForm = (props) => {
             value={title || ""}
             onChange={(e) => onchange(e)}
             placeholder="Select Title"
-            required
           />
         </div>
         <button
@@ -189,11 +208,10 @@ const VideosForm = (props) => {
         </div>
       </div>
       <h2 className="text-center my-3">Points</h2>
-     
-      <PointForm  category={category}/>
 
+      <PointForm category={'mobility'} />
     </div>
   );
 };
 
-export default VideosForm;
+export default Mobility;
