@@ -7,6 +7,8 @@ const Exercise = (props) => {
   const [isFileSelected, setIsFileSelected] = useState(false);
   const [title, setTitle] = useState("");
   const [videoSrc, setVideoSrc] = useState(null);
+  const [Uploaded, setUploaded] = useState(false);
+  const [videoSelectedSrc, setVideoSelectedSrc] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [point, setPoint] = useState({
     title: "",
@@ -22,15 +24,18 @@ const Exercise = (props) => {
       if (snapshopt.data()) {
         setVideoSrc(snapshopt.data().video_url);
         setTitle(snapshopt.data().title);
+        setUploaded(true);
       }
     });
   }, []);
 
   const fileHandler = (e) => {
     if (e.target.files[0]) {
+      setVideoSelectedSrc(URL.createObjectURL(e.target.files[0]));
       setVideoSrc(URL.createObjectURL(e.target.files[0]));
       setVideoUrl(e.target.files[0]);
       setIsFileSelected(true);
+      setUploaded(false);
     }
   };
 
@@ -114,12 +119,18 @@ const Exercise = (props) => {
         <h1>Exercise</h1>
         <progress value={progress} max="100" style={{ width: "100%" }} />
       </div>
-      <video width="100%" height="400px" autoPlay controls>
-        {videoSrc && (
+      {Uploaded && (
+        <video width="100%" height="400px" autoPlay controls>
           <source src={videoSrc} type="video/mp4" />
-        )}
-        Your browser does not support the video tag.
-      </video>
+          Your browser does not support the video tag.
+        </video>
+      )}
+       {!Uploaded ? (
+        <video width="100%" height="400px" autoPlay controls>
+          <source src={videoSelectedSrc} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      ) :""}
       <form
         onSubmit={(e) => {
           onSubmitVideo(e);

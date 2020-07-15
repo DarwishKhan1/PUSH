@@ -21,7 +21,6 @@ const MindSetForm = (props) => {
     title: "",
     sub_title: "",
   });
-  const [points, setPoints] = useState([]);
   const [file, setFile] = useState(null);
   const [image, setImage] = useState(null);
   const [crop, setCrop] = useState({

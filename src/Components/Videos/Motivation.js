@@ -7,7 +7,9 @@ const Motivation = (props) => {
   const [isFileSelected, setIsFileSelected] = useState(false);
   const [title, setTitle] = useState("");
   const [videoSrc, setVideoSrc] = useState(null);
+  const [videoSelectedSrc, setVideoSelectedSrc] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [Uploaded, setUploaded] = useState(false);
   const [point, setPoint] = useState({
     title: "",
     sub_title: "",
@@ -22,6 +24,7 @@ const Motivation = (props) => {
       if (snapshopt.data()) {
         setVideoSrc(snapshopt.data().video_url);
         setTitle(snapshopt.data().title);
+        setUploaded(true);
       }
     });
   }, []);
@@ -29,8 +32,10 @@ const Motivation = (props) => {
   const fileHandler = (e) => {
     if (e.target.files[0]) {
       setVideoSrc(URL.createObjectURL(e.target.files[0]));
+      setVideoSelectedSrc(URL.createObjectURL(e.target.files[0]));
       setVideoUrl(e.target.files[0]);
       setIsFileSelected(true);
+      setUploaded(false);
     }
   };
 
@@ -81,6 +86,7 @@ const Motivation = (props) => {
               title: title,
               video_url: url,
             };
+            setVideoSrc(url);
 
             const documentRef = firebaseDb
               .firestore()
@@ -114,12 +120,18 @@ const Motivation = (props) => {
         <h1>Motivation</h1>
         <progress value={progress} max="100" style={{ width: "100%" }} />
       </div>
-      <video width="100%" height="400px" autoPlay controls>
-        {videoSrc && (
+      {Uploaded && (
+        <video width="100%" height="400px" autoPlay controls>
           <source src={videoSrc} type="video/mp4" />
-        )}
-        Your browser does not support the video tag.
-      </video>
+          Your browser does not support the video tag.
+        </video>
+      )}
+       {!Uploaded ? (
+        <video width="100%" height="400px" autoPlay controls>
+          <source src={videoSelectedSrc} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      ) :""}
       <form
         onSubmit={(e) => {
           onSubmitVideo(e);
@@ -209,7 +221,7 @@ const Motivation = (props) => {
       </div>
       <h2 className="text-center my-3">Points</h2>
 
-      <PointForm category={'motivation'} />
+      <PointForm category={"motivation"} />
     </div>
   );
 };
