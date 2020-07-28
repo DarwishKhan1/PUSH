@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import firebaseDb from "../FirebaseConfig/firebaseConfig";
 import PointForm from "./PointForm";
+import VideoThumbnail from "react-video-thumbnail";
+import { base64StringtoFile } from "../../Utils/utility";
 
 const Challenges = (props) => {
   const [progress, setProgress] = useState(0);
@@ -9,6 +11,8 @@ const Challenges = (props) => {
   const [videoSrc, setVideoSrc] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [Uploaded, setUploaded] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
   const [videoSelectedSrc, setVideoSelectedSrc] = useState(null);
   const [point, setPoint] = useState({
     title: "",
@@ -24,6 +28,7 @@ const Challenges = (props) => {
       if (snapshopt.data()) {
         setVideoSrc(snapshopt.data().video_url);
         setTitle(snapshopt.data().title);
+        setImageUrl(snapshopt.data().thumbnailUrl);
         setUploaded(true)
       }
     });
@@ -38,6 +43,12 @@ const Challenges = (props) => {
       setUploaded(false)
     }
   };
+  const getVideoThumnail = (thumbnail) => {
+    const myFileName = "preview.jpg";
+    const thumbnailFile = base64StringtoFile(thumbnail, myFileName);
+    setImageSrc(thumbnailFile);
+  };
+
 
   const onPointChange = (e) => {
     setPoint({ ...point, [e.target.name]: e.target.value });
@@ -68,6 +79,7 @@ const Challenges = (props) => {
     e.preventDefault();
     if (isFileSelected) {
       const storageRef = firebaseDb.storage().ref().child(`videos/challenges`);
+      const thumbnailStorageRef = firebaseDb.storage().ref().child(`thumbnail/challenges`);
       const uploadTask = storageRef.put(videoUrl);
       uploadTask.on(
         "state_changed",
@@ -82,25 +94,42 @@ const Challenges = (props) => {
         },
         () => {
           storageRef.getDownloadURL().then((url) => {
-            const data = {
-              title: title,
-              video_url: url,
-            };
 
-            const documentRef = firebaseDb
-              .firestore()
-              .collection("videos")
-              .doc("challenges");
-            documentRef.set(data).then((res) => {
-              alert("Data is Uploaded Succesfully");
-            });
-          });
+            const thumbnailUploadTask=thumbnailStorageRef.put(imageSrc);
+ 
+            thumbnailUploadTask.on(
+             "state_changed",
+             (snapshot) => {
+             },
+             (err) => {
+               console.log(err);
+             },
+             () => {
+               thumbnailStorageRef.getDownloadURL().then(thumbUrl => {
+                 const data = {
+                   title: title,
+                   video_url: url,
+                   thumbnailUrl: thumbUrl
+                 };
+     
+                 const documentRef = firebaseDb
+                   .firestore()
+                   .collection("videos")
+                   .doc("challenges");
+                 documentRef.set(data).then((res) => {
+                   alert("Data is Uploaded Succesfully");
+                 });
+               })
+             }
+            )
+           });
         }
       );
     } else {
       const data = {
         title: title,
         video_url: videoSrc,
+        thumbnailUrl: imageUrl
       };
 
       const documentRef = firebaseDb
@@ -131,6 +160,14 @@ const Challenges = (props) => {
           Your browser does not support the video tag.
         </video>
       ) :""}
+       {isFileSelected && (
+        <VideoThumbnail
+          videoUrl={videoSelectedSrc}
+          thumbnailHandler={(thumbnail) => getVideoThumnail(thumbnail)}
+          renderThumbnail={false}
+          snapshotAtTime={1}
+        />
+      )}
       <form
         onSubmit={(e) => {
           onSubmitVideo(e);

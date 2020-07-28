@@ -199,6 +199,7 @@ const MeditationForm = (props) => {
     <div className="mx-auto mt-2 control-width">
       <div className="text-center">
         <h1>Meditation {category}</h1>
+
         <progress value={progress} max="100" style={{ width: "100%" }} />
         {imageUrl &&
           (uploaded ? (
